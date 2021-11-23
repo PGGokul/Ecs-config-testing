@@ -1,0 +1,33 @@
+{
+	"family": "",
+	"taskRoleArn": "",
+	"containerDefinitions": [{
+		"name": "",
+		"image": "",
+		"cpu": 500,
+		"memory": 650,
+		"memoryReservation": 450,
+		"volumesFrom": [],
+		"portMappings": [{
+			"hostPort": 0,
+			"containerPort": 4000,
+			"protocol": "tcp"
+		}],
+		"essential": true,
+		"logConfiguration": {
+			"logDriver": "awslogs",
+			"options": {
+			  "awslogs-group": "GROUP_NAME",
+			  "awslogs-region": "ap-south-1",
+			  "awslogs-stream-prefix": ""
+			}
+		  },
+		"environment": [
+			{
+				"name": "START_CMD",
+				"value": "startup_cmd"
+			}
+		],
+		"mountPoints": []
+	}]
+}
