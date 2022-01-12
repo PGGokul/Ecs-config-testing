@@ -1,0 +1,44 @@
+
+startDeploy()
+{
+# Create a new task definition for this build
+sed -e "s;GIT_COMMIT;${IMAGE_VERSION};g" ${JSON_FILE}.json > ${JSON_FILE}-new-${BUILD_NUMBER}.json
+sed -e "s;startup_cmd;${STARTUP_CMD};g" ${JSON_FILE}-new-${BUILD_NUMBER}.json > ${JSON_FILE}-${BUILD_NUMBER}-v2.json
+sed -e "s;task_role;${TASK_ROLE};g" ${JSON_FILE}-${BUILD_NUMBER}-v2.json > ${JSON_FILE}-${BUILD_NUMBER}-v3.json
+sed -e "s;GROUP_NAME;${GIT_BRANCH};g" ${JSON_FILE}-${BUILD_NUMBER}-v3.json > ${JSON_FILE}-${BUILD_NUMBER}.json
+cat ${JSON_FILE}-${BUILD_NUMBER}.json
+
+aws ecs register-task-definition --family ${TASK_FAMILY} --cli-input-json file://${JSON_FILE}-${BUILD_NUMBER}.json --region ap-south-1
+
+# Update the service with the new task definition and desired count
+TASK_REVISION=`aws ecs describe-task-definition --task-definition ${TASK_FAMILY} --region ap-south-1 | egrep "revision" | tr "/" " " | awk '{print $2}' | sed 's/"$//'`
+echo $TASK_REVISION
+DESIRED_COUNT=`aws ecs describe-services --cluster ${CLUSTER} --services ${SERVICE_NAME}  --region ap-south-1 | egrep "desiredCount" | tr "/" " " | awk '{print $2}' | sed 's/,$//'`
+echo $DESIRED_COUNT
+aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE_NAME} --desired-count ${RUNNING_COUNT} --task-definition ${TASK_FAMILY}:${TASK_REVISION} --force-new-deployment --region ap-south-1
+
+# Jenkins Job wait until service is avaliable in cluster
+aws ecs wait services-stable --cluster ${CLUSTER} --services ${SERVICE_NAME} --region ap-south-1
+if [ $? -eq 0 ]; then
+echo "Build got deployed successfully"
+else
+echo "Build failed"
+exit 1
+fi
+rm -rf ${JSON_FILE}-${BUILD_NUMBER}.json
+}
+
+if [ "$GIT_BRANCH" == "development" ]
+then
+SERVICE_NAME="jinglebid-services-v2"
+IMAGE_VERSION="${GIT_BRANCH}-${BUILD_NUMBER}"
+TASK_FAMILY="jinglebid-services-v2"
+CLUSTER="development"
+STARTUP_CMD="start"
+TASK_ROLE="dev-jinglebid-ecs"
+JSON_FILE="jinglebid-services-v2"
+RUNNING_COUNT=1
+startDeploy
+else
+echo "Skipping a deployment because this branch is not permitted for docker deployment: ${GIT_BRANCH}"
+fi
