@@ -1,9 +1,9 @@
 {
-	"family": "",
-	"taskRoleArn": "",
+	"family": "Ecs-config-testing",
+	"taskRoleArn": "arn:aws:iam::013424092965:role/task_role",
 	"containerDefinitions": [{
-		"name": "",
-		"image": "",
+		"name": "Ecs-config-testing",
+		"image": "013424092965.dkr.ecr.ap-south-1.amazonaws.com/Ecs-config-testing:GIT_COMMIT",
 		"cpu": 500,
 		"memory": 650,
 		"memoryReservation": 450,
@@ -19,7 +19,7 @@
 			"options": {
 			  "awslogs-group": "GROUP_NAME",
 			  "awslogs-region": "ap-south-1",
-			  "awslogs-stream-prefix": ""
+			  "awslogs-stream-prefix": "Ecs-config-testing"
 			}
 		  },
 		"environment": [
